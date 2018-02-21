@@ -29,7 +29,7 @@ def compute_bond_price(state):
 
 def increase_supply(exchange_rate, state):
     # Number of newly minted coins
-    supply_delta = int(TOTAL_SUPPLY * (exchange_rate - 1))
+    supply_delta = int(state['coin_supply'] * (exchange_rate - 1))
 
     state['coin_supply'] += supply_delta
     # Pay bonds
@@ -37,21 +37,21 @@ def increase_supply(exchange_rate, state):
         next_bond_tuple = state['bond_queue'].pop(0)
         t, amount = next_bond_tuple
         if amount > supply_delta:
-            supply_delta = 0
             state['bond_queue'].insert(0, (t, amount - supply_delta))
+            supply_delta = 0
         else:
             supply_delta -= amount
 
     # Pay dividends to shareholders
     if supply_delta > 0:
-        state['shareholder_coins'] = supply_delta
+        state['shareholder_coins'] += supply_delta
 
     return state
 
 
 def decrease_supply(exchange_rate, state):
     # Number of coins to auction/burn
-    supply_delta = int(TOTAL_SUPPLY * (1 - exchange_rate))
+    supply_delta = int(state['coin_supply'] * (1 - exchange_rate))
     bond_price = compute_bond_price(state)
     state['bond_queue'].append((state['t'], int(supply_delta / bond_price)))
     state['coin_supply'] -= supply_delta
